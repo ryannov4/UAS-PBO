@@ -1,366 +1,248 @@
-#-------------------------------------------------------------------------------
-# Name:        File 1 - CRUD Mahasiswa
-# Purpose:     Just for fun
-#
-# Author:      Dendi Nasrulloh
-#
-# Created:     01/10/2022
-# Copyright:   (c) Dendi Nasrulloh
-# Licence:     Open Source
-#-------------------------------------------------------------------------------
+import dash
+import dash_bootstrap_components as dbc
+import dash_html_components as html
+import requests
+import pandas as pd
+import dash_core_components as dcc
+import plotly.express as px
+import numpy as np
+from dash.dependencies import Input,Output
+import dash_table
 
-import mysql.connector
-import os
-import hashlib
-from prettytable import PrettyTable
+app = dash.Dash(external_stylesheets = [ dbc.themes.FLATLY],)
 
 
-db = mysql.connector.connect(host="localhost", user="root", password="", database="db_nilaimhs")
+#COVID_IMG = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fbigredmarkets.com%2Fwp-content%2Fuploads%2F2020%2F03%2FCovid-19.png&f=1&nofb=1"
 
-# membuat fungsi untuk insert data mahasiswa
-def insert_data_mhs(db):
-    print("===================================")
-    print("      INPUT DATA MAHASISWA         ")
-    print("===================================")
-    nim = int(input("Masukkan NIM: "))
-    cursor = db.cursor()
-    cekdulu = "SELECT nim_mhs FROM tbl_mhs WHERE nim_mhs=%s"
-    val = (nim, )
-    cursor.execute(cekdulu, val)
-    hasilcekna = cursor.fetchall()
-    if cursor.rowcount > 0:
-        print("NIM. {} sudah terdaftar di database!".format(nim))
+
+url = "https://api.covid19api.com/summary"
+response_world = requests.request("GET", url)
+df_countries=pd.DataFrame(response_world.json()['Countries'])
+df_global=pd.DataFrame(response_world.json()['Global'], index=[0])
+df_last_updated=response_world.json()['Date']
+
+confirmed = df_global['TotalConfirmed'][0]
+newconfirmed = df_global['NewConfirmed'][0]
+deaths = df_global['TotalDeaths'][0]
+newdeaths = df_global['NewDeaths'][0]
+recovered = df_global['TotalRecovered'][0]
+newrecovered = df_global['NewRecovered'][0]
+
+
+data = {'alpha-2':["AD",	"AE",	"AF",	"AG",	"AI",	"AL",	"AM",	"AN",	"AO",	"AQ",	"AR",	"AS",	"AT",	"AU",	"AW",
+                	"AZ",	"BA",	"BB",	"BD",	"BE",	"BF",	"BG",	"BH",	"BI",	"BJ",	"BM",	"BN",	"BO",	"BR",
+                	"BS",	"BT",	"BV",	"BW",	"BY",	"BZ",	"CA",	"CC",	"CD",	"CF",	"CG",	"CH",	"CI",	"CK",
+                	"CL",	"CM",	"CN",	"CO",	"CR",	"CU",	"CV",	"CX",	"CY",	"CZ",	"DE",	"DJ",	"DK",	"DM",
+                	"DO",	"DZ",	"EC",	"EE",	"EG",	"EH",	"ER",	"ES",	"ET",	"FI",	"FJ",	"FK",	"FM",	"FO",
+                	"FR",	"GA",	"GB",	"GD",	"GE",	"GF",	"GG",	"GH",	"GI",	"GL",	"GM",	"GN",	"GP",	"GQ",
+                	"GR",	"GS",	"GT",	"GU",	"GW",	"GY",	"HK",	"HM",	"HN",	"HR",	"HT",	"HU",	"ID",	"IE",
+                	"IL",	"IM",	"IN",	"IO",	"IQ",	"IR",	"IS",	"IT",	"JE",	"JM",	"JO",	"JP",	"KE",	"KG",
+                	"KH",	"KI",	"KM",	"KN",	"KP",	"KR",	"KW",	"KY",	"KZ",	"LA",	"LB",	"LC",	"LI",	"LK",
+                	"LR",	"LS",	"LT",	"LU",	"LV",	"LY",	"MA",	"MC",	"MD",	"ME",	"MG",	"MH",	"MK",	"ML",
+                	"MM",	"MN",	"MO",	"MP",	"MQ",	"MR",	"MS",	"MT",	"MU",	"MV",	"MW",	"MX",	"MY",	"MZ",
+                	"NA",	"NC",	"NE",	"NF",	"NG",	"NI",	"NL",	"NO",	"NP",	"NR",	"NU",	"NZ",	"OM",	"PA",
+                	"PE",	"PF",	"PG",	"PH",	"PK",	"PL",	"PM",	"PN",	"PR",	"PS",	"PT",	"PW",	"PY",	"QA",
+                	"RE",	"RO",	"RS",	"RU",	"RW",	"SA",	"SB",	"SC",	"SD",	"SE",	"SG",	"SH",	"SI",	"SJ",
+                	"SK",	"SL",	"SM",	"SN",	"SO",	"SR",	"SS",	"ST",	"SV",	"SY",	"SZ",	"TC",	"TD",	"TF",
+                	"TG",	"TH",	"TJ",	"TK",	"TL",	"TM",	"TN",	"TO",	"TR",	"TT",	"TV",	"TW",	"TZ",	"UA",
+                	"UG",	"UM",	"US",	"UY",	"UZ",	"VA",	"VC",	"VE",	"VG",	"VI",	"VN",	"VU",	"WF",	"WS",
+                	"YE",	"YT",	"ZA",	"ZM",	"ZW"],
+
+
+'iso_alpha':["AND",	"ARE",	"AFG",	"ATG",	"AIA",	"ALB",	"ARM",	"ANT",	"AGO",	"ATA",	"ARG",	"ASM",	"AUT",	"AUS",	"ABW",
+        	"AZE",	"BIH",	"BRB",	"BGD",	"BEL",	"BFA",	"BGR",	"BHR",	"BDI",	"BEN",	"BMU",	"BRN",	"BOL",	"BRA",
+        	"BHS",	"BTN",	"BVT",	"BWA",	"BLR",	"BLZ",	"CAN",	"CCK",	"COD",	"CAF",	"COG",	"CHE",	"CIV",	"COK",
+        	"CHL",	"CMR",	"CHN",	"COL",	"CRI",	"CUB",	"CPV",	"CXR",	"CYP",	"CZE",	"DEU",	"DJI",	"DNK",	"DMA",
+        	"DOM",	"DZA",	"ECU",	"EST",	"EGY",	"ESH",	"ERI",	"ESP",	"ETH",	"FIN",	"FJI",	"FLK",	"FSM",	"FRO",
+        	"FRA",	"GAB",	"GBR",	"GRD",	"GEO",	"GUF",	"GGY",	"GHA",	"GIB",	"GRL",	"GMB",	"GIN",	"GLP",	"GNQ",
+        	"GRC",	"SGS",	"GTM",	"GUM",	"GNB",	"GUY",	"HKG",	"HMD",	"HND",	"HRV",	"HTI",	"HUN",	"IDN",	"IRL",
+        	"ISR",	"IMN",	"IND",	"IOT",	"IRQ",	"IRN",	"ISL",	"ITA",	"JEY",	"JAM",	"JOR",	"JPN",	"KEN",	"KGZ",
+        	"KHM",	"KIR",	"COM",	"KNA",	"PRK",	"KOR",	"KWT",	"CYM",	"KAZ",	"LAO",	"LBN",	"LCA",	"LIE",	"LKA",
+        	"LBR",	"LSO",	"LTU",	"LUX",	"LVA",	"LBY",	"MAR",	"MCO",	"MDA",	"MNE",	"MDG",	"MHL",	"MKD",	"MLI",
+        	"MMR",	"MNG",	"MAC",	"MNP",	"MTQ",	"MRT",	"MSR",	"MLT",	"MUS",	"MDV",	"MWI",	"MEX",	"MYS",
+        	"MOZ",	"NAM",	"NCL",	"NER",	"NFK",	"NGA",	"NIC",	"NLD",	"NOR",	"NPL",	"NRU",	"NIU",	"NZL",	"OMN",
+        	"PAN",	"PER",	"PYF",	"PNG",	"PHL",	"PAK",	"POL",	"SPM",	"PCN",	"PRI",	"PSE",	"PRT",	"PLW",	"PRY",
+        	"QAT",	"REU",	"ROU",	"SRB",	"RUS",	"RWA",	"SAU",	"SLB",	"SYC",	"SDN",	"SWE",	"SGP",	"SHN",	"SVN",
+        	"SJM",	"SVK",	"SLE",	"SMR",	"SEN",	"SOM",	"SUR",	"SSD",	"STP",	"SLV",	"SYR",	"SWZ",	"TCA",	"TCD",
+        	"ATF",	"TGO",	"THA",	"TJK",	"TKL",	"TLS",	"TKM",	"TUN",	"TON",	"TUR",	"TTO",	"TUV",	"TWN",	"TZA",
+        	"UKR",	"UGA",	"UMI",	"USA",	"URY",	"UZB",	"VAT",	"VCT",	"VEN",	"VGB",	"VIR",	"VNM",	"VUT",	"WLF",
+        	"WSM",	"YEM",	"MYT",	"ZAF",	"ZMB",	"ZWE"]}
+
+code_mapping = pd.DataFrame(data)
+
+df_world_f=pd.merge(df_countries[['Country','TotalConfirmed','TotalDeaths','TotalRecovered','CountryCode']],code_mapping, left_on = 'CountryCode',right_on = 'alpha-2',how = 'inner')
+
+#################################   Functions for creating Plotly graphs and data card contents ################
+def world_map(df):
+    fig = px.choropleth(df, locations="iso_alpha", color = "TotalConfirmed",
+                        hover_name= "Country",
+                        hover_data = ['TotalConfirmed','TotalDeaths','TotalRecovered'],
+                        projection="orthographic",
+                        color_continuous_scale=px.colors.sequential.Plasma)
+
+    fig.update_layout(margin = dict(l=4,r=4,t=4,b=4))
+
+    return fig
+
+
+def data_for_cases(header, total_cases, new_cases):
+    card_content = [
+        dbc.CardHeader(header),
+
+        dbc.CardBody(
+            [
+               dcc.Markdown( dangerously_allow_html = True,
+                   children = ["{0} <br><sub>+{1}</sub></br>".format(total_cases,new_cases)])
+
+
+                ]
+
+            )
+        ]
+
+    return card_content
+  
+############################################ body of the dashboard ###########################
+
+body_app = dbc.Container([
+
+    dbc.Row( html.Marquee("Kunjungan Kapal Pesiar di Dunia"), style = {'color':'green'}),
+
+    dbc.Row([
+        dbc.Col(dbc.Card(data_for_cases("Confirmed",f'{confirmed:,}',f'{newconfirmed:,}' ), color = 'primary',style = {'text-align':'center'}, inverse = True),xs = 12, sm = 12, md = 4, lg = 4, xl = 4, style = {'padding':'12px 12px 12px 12px'}),
+        dbc.Col(dbc.Card(data_for_cases("Suspend",f'{recovered:,}',f'{newrecovered:,}' ), color = 'success',style = {'text-align':'center'}, inverse = True),xs = 12, sm = 12, md = 4, lg = 4, xl = 4, style = {'padding':'12px 12px 12px 12px'}),
+        dbc.Col(dbc.Card(data_for_cases("Cancel",f'{deaths:,}',f'{newdeaths:,}' ), color = 'danger',style = {'text-align':'center'}, inverse = True),xs = 12, sm = 12, md = 4, lg = 4, xl = 4, style = {'padding':'12px 12px 12px 12px'})
+
+
+        ]),
+
+    html.Br(),
+    html.Br(),
+
+    dbc.Row([html.Div(html.H4('List Kunjungan'),
+                      style = {'textAlign':'center','fontWeight':'bold','family':'georgia','width':'100%'})]),
+
+    html.Br(),
+    html.Br(),
+
+    dbc.Row([dbc.Col(dcc.Graph(id = 'world-graph', figure = world_map(df_world_f)),style = {'height':'450px'},xs = 12, sm = 12, md = 6, lg = 6, xl = 6),
+
+             dbc.Col([html.Div(id = 'dropdown-div', children =
+             [dcc.Dropdown(id = 'country-dropdown',
+                 options = [{'label':i, 'value':i} for i in np.append(['All'],df_countries['Country'].unique()) ],
+                 value = 'All',
+                 placeholder = 'Select the country'
+                 )], style = {'width':'100%', 'display':'inline-block'}),
+
+                      html.Div(id = 'world-table-output')
+                      ],style = {'height':'450px','text-align':'center'},xs = 12, sm = 12, md = 6, lg = 6, xl = 6)
+
+             ])
+
+
+    ],fluid = True)
+
+############################## navigation bar ################################
+
+navbar = dbc.Navbar( id = 'navbar', children = [
+
+
+    html.A(
+    dbc.Row([
+        #dbc.Col(html.Img(src = COVID_IMG, height = "70px")),
+        dbc.Col(
+            dbc.NavbarBrand("BPKS Live Tracker Kunjungan Kapal Pesiar", style = {'color':'black', 'fontSize':'25px','fontFamily':'Times New Roman'}
+                            )
+
+            )
+
+
+        ],align = "center",
+
+        ),
+    href = '/'
+    ),
+    
+                dbc.Row(
+            [
+        dbc.Col(
+
+            #dbc.Button(id = 'button', children = "Support Us", color = "primary", className = 'ml-auto', href = '/')
+
+            )        
+    ],
+            
+     className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
+)
+
+
+
+    ])
+
+
+app.layout = html.Div(id = 'parent', children = [navbar,body_app])
+
+#################################### Callback for adding interactivity to the dashboard ####################### 
+
+@app.callback(Output(component_id='world-table-output', component_property= 'children'),
+              [Input(component_id='country-dropdown', component_property='value')])
+
+def table_country(country):
+    if country == 'All':
+        df_final = df_countries
     else:
-        nama = input("Nama Mahasiswa: ")
-        namana = nama.upper()
-        kelas = input("Kelas: ")
-        kelasna = kelas.upper()
-        jurusan = input("Jurusan: ")
-        jurusana = jurusan.upper()
-        val2 = (nim, namana, kelasna, jurusana)
-        sql = "INSERT INTO tbl_mhs (nim_mhs, nama_mhs, kelas_mhs, jurusan_mhs) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, val2)
-        db.commit()
-        print("Data Mahasiswa Berhasil disimpan!")
+        df_final = df_countries.loc[df_countries['Country'] == '{}'.format(country)]
 
-# membuat fungsi untuk insert data nilai mata kuliah
-def insert_data_nilai(db):
-    print("===================================")
-    print("      INPUT NILAI MAHASISWA        ")
-    print("===================================")
-    cursor = db.cursor()
-    nim = int(input("Masukkan NIM: "))
-    cekdata = "SELECT nim_mhs FROM tbl_mhs WHERE nim_mhs=%s"
-    valcek = (nim, )
-    cursor.execute(cekdata, valcek)
-    hasilcek = cursor.fetchall()
-    if cursor.rowcount < 1:
-        print("Belum ada mahasiswa dengan NIM. {} di dalam database!".format(nim))
-    else:
-        namaMatkul = input("Mata Kuliah: ")
-        makul = namaMatkul.upper()
-        valcekm = (makul, nim)
-        cekmakul = "SELECT nama_matakuliah FROM tbl_nilai WHERE nama_matakuliah=%s AND nim_mhs=%s"
-        cursor.execute(cekmakul, valcekm)
-        hasilcekm = cursor.fetchall()
-        if cursor.rowcount > 0:
-            print("Mata kuliah ini sudah ada dalam database!")
-        else:
-            sks = int(input("Bobot SKS (angka): "))
-            nilai = input("Nilai Mata Kuliah (huruf): ")
-            nil = nilai.upper()
-            smt = int(input("Semester (angka): "))
-            # cek semester ganjil atau genap
-            if smt % 2 == 0 :
-                periode = "GENAP"
-            else:
-                periode = "GANJIL"
-            dosen = input("Nama Dosen: ")
-            dosenUp = dosen.upper()
-            val = (nim, makul, sks, nil, smt, periode, dosenUp)
-            cursor = db.cursor()
-            sql = "INSERT INTO tbl_nilai (nim_mhs, nama_matakuliah, sks_matakuliah, nilai_mhs, semester, periode, nm_dosen) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            cursor.execute(sql, val)
-            db.commit()
-            print("Data Nilai Berhasil disimpan!")
+    return dash_table.DataTable(
+    data = df_final[['Country','TotalConfirmed','TotalSuspend','TotalCancel']].to_dict('records'),
+    columns = [{'id':c , 'name':c} for c in df_final[['Country','TotalConfirmed','TotalRecovered','TotalDeaths']].columns],
+    fixed_rows = {'headers':True},
 
-# fungsi untuk menampilkan data (SELECT)
-def tampil_data(db):
-    print("===================================")
-    print("    TAMPILKAN DATA MAHASISWA       ")
-    print("===================================")
-    nim = int(input("Masukkan NIM: "))
-    cursor = db.cursor(dictionary=True)
-    val = (nim, )
-    sql = "SELECT * FROM tbl_mhs WHERE nim_mhs=%s"
-    cursor.execute(sql, val)
-    hasil = cursor.fetchall()
+    sort_action = 'native',
 
-    if cursor.rowcount < 1:
-        print("Data mahasiswa tidak ditemukan")
-    else:
-        print("\n=====================================")
-        print("      DAFTAR NILAI MATA KULIAH")
-        print("=====================================")
-        for i in hasil:
-            print("NIM\t\t: " + i['nim_mhs'])
-            print("Nama\t\t: " + i['nama_mhs'])
-            print("Kelas\t\t: " + i['kelas_mhs'])
-            print("Jurusan\t\t: " + i['jurusan_mhs'])
-            print("\n")
+    style_table = {
+                   'maxHeight':'450px'
+                   },
 
-    sql2 = "SELECT * FROM tbl_nilai WHERE nim_mhs=%s ORDER BY semester ASC"
-    cursor.execute(sql2, val)
-    hasil2 = cursor.fetchall()
-    noUrut = 1
-    jumNilai = 0
-    sksAwal = 0
+    style_header = {'backgroundColor':'rgb(224,224,224)',
+                    'fontWeight':'bold',
+                    'border':'4px solid white',
+                    'fontSize':'12px'
+                    },
 
-    if cursor.rowcount < 1:
-        print("Belum ada data nilai untuk mahasiswa dengan NIM. {}!".format(nim))
-    else:
-        tabel = PrettyTable()
-        tabel.field_names = ["NO", "MATA KULIAH", "SKS", "NILAI", "SEMESTER", "PERIODE", "NAMA DOSEN"]
-        for n in hasil2:
-            tabel.add_row([noUrut, n['nama_matakuliah'], n['sks_matakuliah'], n['nilai_mhs'], n['semester'], n['periode'], n['nm_dosen']])
-            if n['nilai_mhs'] == "A":
-                nilnil = 4
-            elif n['nilai_mhs'] == "B":
-                nilnil = 3
-            elif n['nilai_mhs'] == "C":
-                nilnil = 2
-            elif n['nilai_mhs'] == "D":
-                nilnil = 1
-            else:
-                nilnil = 0
-            nilaiMatkul = n['sks_matakuliah'] * nilnil
-            jumNilai += nilaiMatkul
-            sksAwal += n['sks_matakuliah']
-            noUrut += 1
-        tabel.align["MATA KULIAH"] = "l"
-        tabel.align["NAMA DOSEN"] = "l"
-        print(tabel)
-        tabel.clear_rows()
-        print("Total Nilai \t: ", jumNilai)
-        ip = jumNilai / sksAwal
-        ipNa = float(round(ip,2))
-        print("IPK \t\t: ", ipNa)
-        # kondisi untuk keterangan IPK
-        if ipNa > 3.75:
-            ketIp = "Sangat Baik"
-        elif ipNa <= 3.75 and ipNa > 3.00:
-            ketIp = "Baik"
-        elif ipNa <= 3.00 and ipNa > 2.85:
-            ketIp = "Cukup"
-        else:
-            ketIp = "Kurang"
-        print("Keterangan \t: ", ketIp)
+    style_data_conditional = [
+
+              {
+                'if': {'row_index': 'odd',
+                       },
+                'backgroundColor': 'rgb(240,240,240)',
+                'fontSize':'12px',
+                },
+
+            {
+                  'if': {'row_index': 'even'},
+                  'backgroundColor': 'rgb(255, 255, 255)',
+                'fontSize':'12px',
+
+            }
+
+        ],
+
+    style_cell = {
+        'textAlign':'center',
+        'fontFamily':'Times New Roman',
+        'border':'4px solid white',
+        'width' :'20%',
+        'textOverflow': 'ellipsis',
 
 
-# fungsi untuk merubah data (UPDATE) mahasiswa
-def ubah_data_mhs(db):
-    print("===================================")
-    print("         UBAH DATA MAHASISWA       ")
-    print("===================================")
-    cursor = db.cursor(dictionary=True)
-    nim = int(input("Masukkan NIM: "))
-    cekdata = "SELECT nim_mhs FROM tbl_mhs WHERE nim_mhs=%s"
-    valcek = (nim, )
-    cursor.execute(cekdata, valcek)
-    hasilcek = cursor.fetchall()
-    if cursor.rowcount < 1:
-        print("Data Mahasiswa tidak ditemukan!")
-    else:
-        nama = input("Nama Mahasiswa: ")
-        namana = nama.upper()
-        kelas = input("Kelas: ")
-        kelasna = kelas.upper()
-        jurusan = input("Jurusan: ")
-        jurusana = jurusan.upper()
 
-        sql = "UPDATE tbl_mhs SET nama_mhs=%s, kelas_mhs=%s, jurusan_mhs=%s WHERE nim_mhs=%s"
-        val = (namana, kelasna, jurusana, nim)
-        cursor.execute(sql, val)
-        db.commit()
-        print("Data mahasiswa an. {} dengan NIM. {} berhasil dirubah.".format(namana, nim))
+        }
 
-# fungsi untuk merubah data (UPDATE) nilai mahasiswa
-def ubah_data_nilai(db):
-    print("===================================")
-    print("         UBAH DATA NILAI           ")
-    print("===================================")
-    cursor = db.cursor(dictionary=True)
-    nim = int(input("Masukkan NIM: "))
-    cekdata = "SELECT nim_mhs FROM tbl_nilai WHERE nim_mhs=%s"
-    valcek = (nim, )
-    cursor.execute(cekdata, valcek)
-    hasilcek = cursor.fetchall()
-    if cursor.rowcount < 1:
-        print("Belum ada data nilai untuk mahasiswa dengan NIM. {}!".format(nim))
-    else:
-        matakul = input("Mata Kuliah: ")
-        matKul = matakul.upper()
-        cekmatakul = "SELECT nama_matakuliah FROM tbl_nilai WHERE nama_matakuliah=%s AND nim_mhs=%s"
-        valmatkul = (matKul, nim)
-        cursor.execute(cekmatakul, valmatkul)
-        hasilcekmatakul = cursor.fetchall()
-        if cursor.rowcount < 1:
-            print("Belum ada data nilai untuk mata kuliah {}!".format(matKul))
-        else:
-            sksbaru = int(input("Bobot SKS (angka): "))
-            nilaibaru = input("Nilai Mata Kuliah (huruf): ")
-            nilbar = nilaibaru.upper()
-            sql = "UPDATE tbl_nilai SET sks_matakuliah=%s, nilai_mhs=%s WHERE nim_mhs=%s AND nama_matakuliah=%s"
-            val = (sksbaru, nilbar, nim, matKul)
-            cursor.execute(sql, val)
-            db.commit()
-            print("Data nilai mahasiswa dengan NIM. {} pada mata kuliah {} berhasil dirubah.".format(nim, matKul))
 
-# fungsi untuk menghapus data mahasiswa beserta nilainya (DELETE)
-def delete_data(db):
-    print("===================================")
-    print("         HAPUS DATA MAHASISWA      ")
-    print("===================================")
-    cursor = db.cursor()
-    nim = int(input("Masukkan NIM: "))
-    val = (nim, )
-    cekdulu = "SELECT tbl_mhs.nim_mhs, tbl_nilai.nim_mhs FROM tbl_mhs LEFT JOIN tbl_nilai ON tbl_mhs.nim_mhs=tbl_nilai.nim_mhs WHERE tbl_mhs.nim_mhs=%s"
-    cursor.execute(cekdulu, val)
-    hasilcekna = cursor.fetchall()
-    if cursor.rowcount < 1:
-        print("Tidak ditemukan mahasiswa dengan NIM. {}".format(nim))
-    else:
-        sql = "DELETE tbl_mhs, tbl_nilai FROM tbl_mhs LEFT JOIN tbl_nilai ON tbl_mhs.nim_mhs=tbl_nilai.nim_mhs WHERE tbl_mhs.nim_mhs=%s"
-        cursor.execute(sql, val)
-        db.commit()
-        print("Data mahasiswa dengan NIM. {} berhasil dihapus!".format(nim))
+  )
 
-# fungsi untuk menghapus nilai mahasiswa (DELETE)
-def delete_nilai(db):
-    print("===================================")
-    print("       HAPUS NILAI MAHASISWA       ")
-    print("===================================")
-    cursor = db.cursor()
-    nim = int(input("Masukkan NIM: "))
-    val = (nim, )
-    cekdulu = "SELECT nim_mhs FROM tbl_nilai WHERE nim_mhs=%s"
-    cursor.execute(cekdulu, val)
-    hasilcekna = cursor.fetchall()
-    if cursor.rowcount < 1:
-        print("Belum ada data nilai untuk mahasiswa dengan NIM. {}".format(nim))
-    else:
-        makul = input("Mata Kuliah yang akan dihapus: ")
-        matkul = makul.upper()
-        cekmakul = "SELECT nama_matakuliah FROM tbl_nilai WHERE nama_matakuliah=%s AND nim_mhs=%s"
-        val2 = (matkul, nim)
-        cursor.execute(cekmakul, val2)
-        hasilcekmakul = cursor.fetchall()
-        if cursor.rowcount < 1:
-            print("Belum ada data nilai matakuliah {} untuk mahasiswa dengan NIM {}".format(matkul, nim))
-        else:
-            sqlna = "DELETE FROM tbl_nilai WHERE nama_matakuliah=%s AND nim_mhs=%s"
-            cursor.execute(sqlna, val2)
-            db.commit()
-            print("Mata kuliah {} telah dihapus untuk mahasiswa dengan NIM. {}".format(matkul, nim))
 
-# fungsi untuk mencari data
-def cari_data(db):
-    print("===================================")
-    print("       CARI DATA MAHASISWA         ")
-    print("===================================")
-    keyword = input("Masukkan keyword: ")
-    cursor = db.cursor(dictionary=True)
-    cekmhs = "SELECT * FROM tbl_mhs WHERE nama_mhs LIKE %s OR kelas_mhs LIKE %s OR jurusan_mhs LIKE %s"
-    val = ("%{}%".format(keyword), "%{}%".format(keyword), "%{}%".format(keyword))
-    cursor.execute(cekmhs, val)
-    hasilna = cursor.fetchall()
-    noUrut = 1
-    if cursor.rowcount < 1:
-        print("Tidak ditemukan data dengan keyword {}".format(keyword))
-    else:
-        print("\nHASIL PENCARIAN DATA DENGAN KEYWORD : {}".format(keyword))
-        print("Ditemukan {} data\n".format(cursor.rowcount))
-        tabel2 = PrettyTable()
-        tabel2.field_names = ["NO", "NIM", "NAMA MAHASISWA", "KELAS", "JURUSAN"]
-        for i in hasilna:
-            tabel2.add_row([noUrut, i['nim_mhs'], i['nama_mhs'], i['kelas_mhs'], i['jurusan_mhs']])
-            noUrut += 1
-        tabel2.align["NAMA MAHASISWA"] = "l"
-        tabel2.align["JURUSAN"] = "l"
-        print(tabel2)
-        tabel2.clear_rows()
-
-# fungsi untuk login
-def login_aplikasi(db):
-    print("===================================")
-    print("   LOGIN APLIKASI DATA MAHASISWA   ")
-    print("===================================")
-    username = input("Username: ")
-    password = input("Password: ")
-    pwd = hashlib.md5(password.encode())
-    pwdna = pwd.hexdigest()
-
-    cursor = db.cursor()
-    sql = "SELECT * FROM tbl_user WHERE username=%s AND password=%s"
-    val = (username, pwdna)
-    cursor.execute(sql, val)
-    hasil = cursor.fetchall()
-
-    if cursor.rowcount > 0:
-        os.system("cls")
-        print("\nHallo {}, anda berhasil login. Silahkan pilih menu!".format(username))
-        while True:
-            tampil_menu(db)
-    else:
-        print("Username atau Password tidak ditemukan!\n")
-        login_aplikasi(db)
-
-# membuat fungsi memilih menu
-def tampil_menu(db):
-    print("\n===================================")
-    print("      APLIKASI DATA MAHASISWA       ")
-    print("===================================")
-    print("1. Input Data Mahasiswa")
-    print("2. Input Data Nilai")
-    print("3. Tampilkan Data")
-    print("4. Ubah Data Mahasiswa")
-    print("5. Ubah Data Nilai")
-    print("6. Hapus Data")
-    print("7. Hapus Nilai Mata Kuliah")
-    print("8. Cari Data")
-    print("0. Keluar")
-    print("--------------------------------")
-    menu = input("Pilih Menu: ")
-
-    # bersihkan layar
-    os.system("cls")
-
-    # membuat pilihan menu
-    if menu == "1":
-        insert_data_mhs(db)
-    elif menu == "2":
-        insert_data_nilai(db)
-    elif menu == "3":
-        tampil_data(db)
-    elif menu == "4":
-        ubah_data_mhs(db)
-    elif menu == "5":
-        ubah_data_nilai(db)
-    elif menu == "6":
-        delete_data(db)
-    elif menu == "7":
-        delete_nilai(db)
-    elif menu == "8":
-        cari_data(db)
-    elif menu == "0":
-        print("Terima kasih, anda telah keluar dari aplikasi!")
-        exit()
-    else:
-        print("Tidak ditemukan menu {} di program ini!".format(menu))
 
 if __name__ == "__main__":
-    login_aplikasi(db)
-
-
-
-
+    app.run_server()
